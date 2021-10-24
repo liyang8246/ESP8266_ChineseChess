@@ -21,6 +21,7 @@ void swapchess();
 void connect();
 void send();
 void parse();
+// void showfps(double fps);
 
 bool chesspixels[7][25]{
     {1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 1},
@@ -65,7 +66,7 @@ void setup() {
     pinMode(D5, INPUT_PULLUP);
     pinMode(D7, INPUT_PULLUP);
     connect();
-    udp.setTimeout(5);
+    udp.setTimeout(10);
     ticker0.attach(0.08, pointer);
     // ticker1.attach(5, parse);
 }
@@ -75,7 +76,6 @@ void loop() {
     // long dtime = micros() - time1;
     // time1 = micros();
     // double fps = 1000000.0 / dtime;
-    // Serial.println(fps);
     // finish compute
     n++;
     drawPointer(pointer_x, pointer_y);
@@ -155,10 +155,10 @@ void drawPointer(int x0, int y0) {
     display.drawPixel(x + 5, y + 6, WHITE);
     display.drawPixel(x + 6, y + 6, WHITE);
     if (master == 1) {
-        display.setCursor(80, 0);
+        display.setCursor(88, 56);
         display.write("master");
     } else {
-        display.setCursor(80, 0);
+        display.setCursor(80, 56);
         display.write("unmaster");
     }
 }
@@ -196,6 +196,9 @@ void connect() {
         Serial.print("local IP: ");
         Serial.println(wifi.softAPIP());
         udp.begin(port);
+        for (int i = 0; i < 90; i++) {
+            *(&chessmap[0][0] + i) = 0;
+        }
         master = 1;
     } else {
         Serial.println("connect success");
@@ -214,14 +217,14 @@ void send() {
             udp.beginPacket(udp.remoteIP(), port);
             udp.print(*(n + i));
             udp.endPacket();
-            delay(10);
+            delay(50);
         }
     } else {
         for (int i = 0; i < 90; i++) {
             udp.beginPacket(mainIP, port);
             udp.print(*(n + i));
             udp.endPacket();
-            delay(10);
+            delay(50);
         }
     }
 }
@@ -229,11 +232,14 @@ void send() {
 void parse() {
     if (udp.parsePacket()) {
         int n = udp.parseInt();
+        Serial.print("chessID: ");
         Serial.println(n);
+        Serial.print("I: ");
+        Serial.println(i);
         *(&chessmap[0][0] + i) = n;
         i = i + 1;
     }
-    if(i == 90){
+    if (i == 90) {
         i = 0;
     }
 }
